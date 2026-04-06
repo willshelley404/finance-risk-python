@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+pandas
+numpy
+scikit-learn
+xgboost
+shap
+streamlit
+langchain
+faiss-cpu
+openai
+python-dotenv

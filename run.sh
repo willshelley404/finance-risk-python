@@ -1,0 +1,4 @@
+#!/bin/bash
+
+uvicorn app.main:app --reload &
+streamlit run frontend/streamlit_app.py
