@@ -1,22 +1,41 @@
-# training + prediction
-from xgboost import XGBClassifier
-from sklearn.model_selection import train_test_split
+import numpy as np
+import pandas as pd
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.preprocessing import StandardScaler
+import pickle
+from pathlib import Path
 
 class RiskModel:
-
     def __init__(self):
-        self.model = XGBClassifier(
-            n_estimators=200,
-            max_depth=5,
-            learning_rate=0.05
-        )
-
+        self.model = RandomForestClassifier(n_estimators=100, random_state=42)
+        self.scaler = StandardScaler()
+        self.feature_names = None
+        
     def train(self, X, y):
-        X_train, X_test, y_train, y_test = train_test_split(X, y)
-
-        self.model.fit(X_train, y_train)
-        print("Model trained")
-
+        """Train the model on historical data"""
+        X_scaled = self.scaler.fit_transform(X)
+        self.model.fit(X_scaled, y)
+        self.feature_names = X.columns.tolist()
+        
     def predict(self, X):
-        prob = self.model.predict_proba(X)[:, 1]
-        return prob
+        """Predict probability of default"""
+        X_scaled = self.scaler.transform(X)
+        return self.model.predict_proba(X_scaled)[:, 1]
+    
+    def get_feature_importance(self):
+        """Get feature importance scores"""
+        return dict(zip(self.feature_names, self.model.feature_importances_))
+    
+    def save(self, path: str):
+        """Save model to disk"""
+        Path(path).parent.mkdir(exist_ok=True)
+        with open(path, 'wb') as f:
+            pickle.dump({'model': self.model, 'scaler': self.scaler, 'features': self.feature_names}, f)
+    
+    def load(self, path: str):
+        """Load model from disk"""
+        with open(path, 'rb') as f:
+            data = pickle.load(f)
+            self.model = data['model']
+            self.scaler = data['scaler']
+            self.feature_names = data['features']
